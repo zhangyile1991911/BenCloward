@@ -32,7 +32,7 @@ out float fill,out float stroke,out float sdf,out float sdfStroke)
     float2 tmp = (remapUV - lerpResultA) * aspectValue + cornerValue;
     float toZeroLength = length(max(tmp,float2(0.f,0.f)));
     float fromZeroValue = min(max(tmp.x,tmp.y),0.f);
-    // 获取
+    // 获取sdf
     sdf = toZeroLength + fromZeroValue - cornerValue;
 }
 

@@ -65,12 +65,12 @@ float Reciprocal(float v)
 
 void ScaleUV(float2 uv,float2 scale,float2 pivot,out float2 result)
 {
-    scale = max(float2(0.001,001),scale);
+    scale = max(float2(0.001f,0.001f),scale);
     //偏移回原点
-    uv = (uv - pivot);
-    result = Reciprocal(scale) * uv;
+    uv -= pivot;
+    result = uv / scale;
     //在偏移回去
-    result = uv + pivot;
+    result += pivot;
 }
 
 void Tilt(float2 uv,float2 tilt,float2 result)
@@ -84,4 +84,38 @@ void Tilt(float2 uv,float2 tilt,float2 result)
     result = uv + float2(inv.y,inv.x) - tilt / 2.0;
 }
 
+void Mirror(float2 value,float subdivisions,float height,out float2 result,out float2 inverse)
+{
+    //value(0.3,0.3) subdivisions 0.5
+    //r1 = (0.15,0.15)
+    float2 r1 = value * subdivisions;
+    //去掉整数部分,保留小数
+    //r2 (0.3,0.3) - (0,0)
+    float2 r2 = value - floor(r1);
+    //r3 min(0.3,1-0.3) * 2f = 0.6
+    //result = 0.6 * 1f;
+    float2 r3 = min(r2,(1-r2)) * float2(2.f,2.f);
+    result = r3 * height;
+    //invserse = (1 - 0.6) * 1 - 1 + 1 = 0.4 - 1 + 1 = -0.6f + 1= 0.4f
+    inverse = (1.f - r3) * height - height + float2(1.f,1.f);
+}
+
+
+void AntiAliasing(float gradient,float cutoff,out float result)
+{
+    float r = cutoff - gradient;
+    float len = length(float2(ddx(r),ddy(r)));
+    result = saturate(0.5 - r/len);
+}
+
+float2 Rotate2D(float2 uv,float2 pivot, float angle)
+{
+    // 将角度转换为弧度
+    float rad = radians(angle); 
+    float sinTheta = sin(rad);
+    float cosTheta = cos(rad);
+
+    float2x2 rotationMatrix = float2x2(cosTheta, -sinTheta, sinTheta, cosTheta);
+    return mul(rotationMatrix, uv - pivot) + pivot;
+}
 #endif
