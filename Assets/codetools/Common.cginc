@@ -18,8 +18,16 @@ float3 inverseLerp(float3 A, float3 B, float3 T)
 
 void LinearGradient(float2 uv,float isInvert,out float u,out float v)
 {
+    //判断是否翻转
     isInvert = step(0.5,isInvert);
+    //翻转uv 如果输入uv(0.3,0.3) flipUV(0.7,0.7)
     float2 flipUV = (1.0f - uv) * isInvert;
+    //假设isInvert = false
+    //(0.3,0.3) * 0 + (0.7,0.7)
+    //(0.7,0.7)
+    //isInvert = true
+    //(0.3,0.3) * 1 + (0.7,0.7)
+    //(1.0,1.0)
     uv = uv * (1.f - isInvert) + flipUV;
     u = uv.x;
     v = uv.y;
@@ -117,5 +125,39 @@ float2 Rotate2D(float2 uv,float2 pivot, float angle)
 
     float2x2 rotationMatrix = float2x2(cosTheta, -sinTheta, sinTheta, cosTheta);
     return mul(rotationMatrix, uv - pivot) + pivot;
+}
+
+float2 PolarCoordinates(float2 uv,float RadialScale,float LengthScale)
+{
+    //移动到中间
+    uv = 0.5f - uv;
+    //距离中心有多远 how far away from center
+    float u = length(uv) * 2.f * RadialScale;
+
+    //计算角度
+    float v = atan2(uv.y,uv.x) / (2.0 * PI);//2π
+    //归一化
+    v = (v + 1.0) * 0.5f;
+    //距离圆有多远 how far away from circle
+    v *= LengthScale;
+    return float2(u,v);
+}
+
+
+float Posterize(float ln,float steps)
+{
+    return floor(ln * steps) / steps;
+}
+
+void SDFUnite(float sdf1,float sdf2,float blend,out float smooth,out float precised)
+{
+    precised = min(sdf1,sdf2);
+    //求差,缩小一半
+    float halfDistSdf = (sdf2 - sdf1) * 0.5f;
+    float das = saturate(halfDistSdf/blend + 0.5f) ;
+    //从sdf2 -> sdf1 之间插值
+    float lerpval = lerp(sdf2,sdf1,das);
+
+    smooth = lerpval -  (das * blend) * (1.0f - das);
 }
 #endif
